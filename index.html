@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>🚗 Car Clicker</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #1e1e1e, #2e2e2e);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .game {
+      background: #111;
+      padding: 25px;
+      border-radius: 16px;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    .money {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    .car {
+      font-size: 80px;
+      cursor: pointer;
+      transition: transform 0.1s;
+      user-select: none;
+      margin-bottom: 5px;
+    }
+
+    .car:active {
+      transform: scale(0.9);
+    }
+
+    .car-name {
+      margin-bottom: 10px;
+      color: #ff9800;
+      font-weight: bold;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 10px;
+      background: #ff9800;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+      color: #aaa;
+    }
+
+    .info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<div class="game">
+  <h1>🚗 Car Clicker</h1>
+
+  <div class="money">💰 Деньги: <span id="money">0</span>$</div>
+
+  <div class="car" onclick="clickCar()" id="carIcon">🚘</div>
+  <div class="car-name" id="carName">Honda Civic</div>
+
+  <button onclick="buyEngine()">
+    🔧 Улучшить двигатель (+1$/клик) — <span id="enginePrice">50</span>$
+  </button>
+
+  <button onclick="buyTaxi()">
+    🚕 Купить такси (+2$/сек) — <span id="taxiPrice">100</span>$
+  </button>
+
+  <button onclick="buyNextCar()" id="carButton">
+    🚗 Купить новую машину — <span id="carPrice">500</span>$
+  </button>
+
+  <div class="info">
+    Доход за клик: <span id="perClick">1</span>$<br>
+    Пассивный доход: <span id="perSecond">0</span>$/сек
+  </div>
+</div>
+
+<script>
+  const cars = [
+    { name: "Honda Civic", icon: "🚘", price: 0, bonus: 1 },
+    { name: "BMW", icon: "🚙", price: 500, bonus: 3 },
+    { name: "Porsche", icon: "🏎️", price: 2000, bonus: 6 },
+    { name: "Ferrari", icon: "🏎️🔥", price: 5000, bonus: 10 }
+  ];
+
+  let money = Number(localStorage.getItem("money")) || 0;
+  let perClick = Number(localStorage.getItem("perClick")) || 1;
+  let perSecond = Number(localStorage.getItem("perSecond")) || 0;
+  let enginePrice = Number(localStorage.getItem("enginePrice")) || 50;
+  let taxiPrice = Number(localStorage.getItem("taxiPrice")) || 100;
+  let carIndex = Number(localStorage.getItem("carIndex")) || 0;
+
+  const moneyEl = document.getElementById("money");
+  const perClickEl = document.getElementById("perClick");
+  const perSecondEl = document.getElementById("perSecond");
+  const enginePriceEl = document.getElementById("enginePrice");
+  const taxiPriceEl = document.getElementById("taxiPrice");
+  const carIconEl = document.getElementById("carIcon");
+  const carNameEl = document.getElementById("carName");
+  const carButtonEl = document.getElementById("carButton");
+  const carPriceEl = document.getElementById("carPrice");
+
+  function updateUI() {
+    moneyEl.textContent = Math.floor(money);
+    perClickEl.textContent = perClick;
+    perSecondEl.textContent = perSecond;
+    enginePriceEl.textContent = enginePrice;
+    taxiPriceEl.textContent = taxiPrice;
+
+    carIconEl.textContent = cars[carIndex].icon;
+    carNameEl.textContent = cars[carIndex].name;
+
+    if (carIndex < cars.length - 1) {
+      carPriceEl.textContent = cars[carIndex + 1].price;
+      carButtonEl.disabled = money < cars[carIndex + 1].price;
+    } else {
+      carButtonEl.textContent = "🏁 Максимальная машина";
+      carButtonEl.disabled = true;
+    }
+  }
+
+  function save() {
+    localStorage.setItem("money", money);
+    localStorage.setItem("perClick", perClick);
+    localStorage.setItem("perSecond", perSecond);
+    localStorage.setItem("enginePrice", enginePrice);
+    localStorage.setItem("taxiPrice", taxiPrice);
+    localStorage.setItem("carIndex", carIndex);
+  }
+
+  function clickCar() {
+    money += perClick;
+    updateUI();
+    save();
+  }
+
+  function buyEngine() {
+    if (money >= enginePrice) {
+      money -= enginePrice;
+      perClick += 1;
+      enginePrice = Math.floor(enginePrice * 1.5);
+      updateUI();
+      save();
+    }
+  }
+
+  function buyTaxi() {
+    if (money >= taxiPrice) {
+      money -= taxiPrice;
+      perSecond += 2;
+      taxiPrice = Math.floor(taxiPrice * 1.6);
+      updateUI();
+      save();
+    }
+  }
+
+  function buyNextCar() {
+    if (carIndex < cars.length - 1) {
+      const nextCar = cars[carIndex + 1];
+      if (money >= nextCar.price) {
+        money -= nextCar.price;
+        carIndex++;
+        perClick += nextCar.bonus;
+        updateUI();
+        save();
+      }
+    }
+  }
+
+  setInterval(() => {
+    money += perSecond;
+    updateUI();
+    save();
+  }, 1000);
+
+  updateUI();
+</script>
+
+</body>
+</html>
