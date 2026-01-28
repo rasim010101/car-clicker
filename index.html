@@ -1,208 +1,300 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>🚗 Car Clicker</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #1e1e1e, #2e2e2e);
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+<meta charset="UTF-8">
+<title>🚗 Car Clicker</title>
 
-    .game {
-      background: #111;
-      padding: 25px;
-      border-radius: 16px;
-      width: 360px;
-      text-align: center;
-      box-shadow: 0 0 25px rgba(0,0,0,0.7);
-    }
+<style>
+body {
+  margin: 0;
+  background: #000; /* ЧЁРНЫЙ ФОН */
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
 
-    h1 {
-      margin-bottom: 5px;
-    }
+/* ===== ОБЁРТКА ===== */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
 
-    .money {
-      font-size: 22px;
-      margin-bottom: 10px;
-    }
+/* ===== СЦЕНА ===== */
+.scene {
+  width: 320px;
+  height: 180px;
+  background: linear-gradient(#87ceeb 60%, #7ed957 60%);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 25px rgba(0,0,0,.6);
+}
 
-    .car {
-      font-size: 80px;
-      cursor: pointer;
-      transition: transform 0.1s;
-      user-select: none;
-      margin-bottom: 5px;
-    }
+/* ===== ДОРОГА ===== */
+.road {
+  position: absolute;
+  bottom: 0;
+  width: 200%;
+  height: 40px;
+  background: repeating-linear-gradient(
+    90deg,
+    #444 0 30px,
+    #555 30px 60px
+  );
+  animation: roadMove 2s linear infinite;
+}
 
-    .car:active {
-      transform: scale(0.9);
-    }
+@keyframes roadMove {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
 
-    .car-name {
-      margin-bottom: 10px;
-      color: #ff9800;
-      font-weight: bold;
-    }
+/* ===== МАШИНА ===== */
+.car {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(-1); /* ← ОТЗЕРКАЛИВАНИЕ */
+  font-size: 56px;
+  cursor: pointer;
+  animation: idle 1s ease-in-out infinite;
+  z-index: 5;
+}
 
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      border: none;
-      border-radius: 10px;
-      background: #ff9800;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-    }
+@keyframes idle {
+0%,100% { transform: translate(-50%, 0) scaleX(-1); }
+50% { transform: translate(-50%, -2px) scaleX(-1); }
+}
 
-    button:disabled {
-      background: #555;
-      cursor: not-allowed;
-      color: #aaa;
-    }
+/* ===== УСКОРЕНИЕ ===== */
+.car.boost {
+  animation: boost 0.2s ease;
+}
 
-    .info {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #ccc;
-    }
-  </style>
+@keyframes boost {
+0% { transform: translate(-50%, 0) scaleX(-1); }
+50% { transform: translate(-54%, -3px) scaleX(-1); }
+100% { transform: translate(-50%, 0) scaleX(-1); }
+}
+
+/* ===== ДЫМ (СЗАДИ) ===== */
+.smoke {
+  position: absolute;
+  bottom: 40px;
+  left: calc(50% - 70px); /* СЛЕВА ОТ МАШИНЫ */
+  font-size: 18px;
+  animation: smoke 0.6s ease-out;
+  pointer-events: none;
+}
+
+@keyframes smoke {
+  from {
+    opacity: .8;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px) scale(1.5);
+  }
+}
+
+/* ===== ИНТЕРФЕЙС ===== */
+.game {
+  background: #111;
+  color: white;
+  padding: 18px;
+  border-radius: 16px;
+  width: 320px;
+  text-align: center;
+}
+
+.car-name {
+  color: orange;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: none;
+  background: orange;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #555;
+  color: #aaa;
+}
+
+.info {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #ccc;
+}
+</style>
 </head>
 <body>
 
-<div class="game">
-  <h1>🚗 Car Clicker</h1>
+<div class="wrapper">
 
-  <div class="money">💰 Деньги: <span id="money">0</span>$</div>
-
-  <div class="car" onclick="clickCar()" id="carIcon">🚘</div>
-  <div class="car-name" id="carName">Honda Civic</div>
-
-  <button onclick="buyEngine()">
-    🔧 Улучшить двигатель (+1$/клик) — <span id="enginePrice">50</span>$
-  </button>
-
-  <button onclick="buyTaxi()">
-    🚕 Купить такси (+2$/сек) — <span id="taxiPrice">100</span>$
-  </button>
-
-  <button onclick="buyNextCar()" id="carButton">
-    🚗 Купить новую машину — <span id="carPrice">500</span>$
-  </button>
-
-  <div class="info">
-    Доход за клик: <span id="perClick">1</span>$<br>
-    Пассивный доход: <span id="perSecond">0</span>$/сек
+  <!-- СЦЕНА -->
+  <div class="scene">
+    <div class="road" id="road"></div>
+    <div class="car" id="car" onclick="clickCar()">🚘</div>
   </div>
+
+  <!-- ИНТЕРФЕЙС -->
+  <div class="game">
+    <h2>🚗 Car Clicker</h2>
+    💰 <span id="money">0</span>$<br><br>
+
+    <div class="car-name" id="carName">Honda Civic</div>
+
+    <button onclick="buyEngine()">🔧 Двигатель (+1$) — <span id="enginePrice">50</span>$</button>
+    <button onclick="buyTaxi()">🚕 Такси (+2$/сек) — <span id="taxiPrice">100</span>$</button>
+    <button onclick="buyCar()" id="carBtn">🚗 Новая машина — <span id="carPrice">500</span>$</button>
+
+    <div class="info">
+      Клик: <span id="perClick">1</span>$ |
+      Пассив: <span id="perSecond">0</span>$/сек
+    </div>
+  </div>
+
 </div>
 
 <script>
-  const cars = [
-    { name: "Honda Civic", icon: "🚘", price: 0, bonus: 1 },
-    { name: "BMW", icon: "🚙", price: 500, bonus: 3 },
-    { name: "Porsche", icon: "🏎️", price: 2000, bonus: 6 },
-    { name: "Ferrari", icon: "🏎️🔥", price: 5000, bonus: 10 }
-  ];
+/* ===== МАШИНЫ ===== */
+const cars = [
+  { name: "Honda Civic", icon: "🚘", price: 0, bonus: 1 },
+  { name: "BMW", icon: "🚙", price: 500, bonus: 3 },
+  { name: "Porsche", icon: "🏎️", price: 2000, bonus: 6 },
+  { name: "Ferrari", icon: "🏎️🔥", price: 5000, bonus: 10 }
+];
 
-  let money = Number(localStorage.getItem("money")) || 0;
-  let perClick = Number(localStorage.getItem("perClick")) || 1;
-  let perSecond = Number(localStorage.getItem("perSecond")) || 0;
-  let enginePrice = Number(localStorage.getItem("enginePrice")) || 50;
-  let taxiPrice = Number(localStorage.getItem("taxiPrice")) || 100;
-  let carIndex = Number(localStorage.getItem("carIndex")) || 0;
+let money = +localStorage.getItem("money") || 0;
+let perClick = +localStorage.getItem("perClick") || 1;
+let perSecond = +localStorage.getItem("perSecond") || 0;
+let enginePrice = +localStorage.getItem("enginePrice") || 50;
+let taxiPrice = +localStorage.getItem("taxiPrice") || 100;
+let carIndex = +localStorage.getItem("carIndex") || 0;
 
-  const moneyEl = document.getElementById("money");
-  const perClickEl = document.getElementById("perClick");
-  const perSecondEl = document.getElementById("perSecond");
-  const enginePriceEl = document.getElementById("enginePrice");
-  const taxiPriceEl = document.getElementById("taxiPrice");
-  const carIconEl = document.getElementById("carIcon");
-  const carNameEl = document.getElementById("carName");
-  const carButtonEl = document.getElementById("carButton");
-  const carPriceEl = document.getElementById("carPrice");
+const moneyEl = document.getElementById("money");
+const perClickEl = document.getElementById("perClick");
+const perSecondEl = document.getElementById("perSecond");
+const enginePriceEl = document.getElementById("enginePrice");
+const taxiPriceEl = document.getElementById("taxiPrice");
+const carPriceEl = document.getElementById("carPrice");
+const carBtn = document.getElementById("carBtn");
+const carEl = document.getElementById("car");
+const carNameEl = document.getElementById("carName");
+const road = document.getElementById("road");
 
-  function updateUI() {
-    moneyEl.textContent = Math.floor(money);
-    perClickEl.textContent = perClick;
-    perSecondEl.textContent = perSecond;
-    enginePriceEl.textContent = enginePrice;
-    taxiPriceEl.textContent = taxiPrice;
+let speedTimeout;
 
-    carIconEl.textContent = cars[carIndex].icon;
-    carNameEl.textContent = cars[carIndex].name;
+/* ===== UI ===== */
+function updateUI() {
+  moneyEl.textContent = Math.floor(money);
+  perClickEl.textContent = perClick;
+  perSecondEl.textContent = perSecond;
+  enginePriceEl.textContent = enginePrice;
+  taxiPriceEl.textContent = taxiPrice;
 
-    if (carIndex < cars.length - 1) {
-      carPriceEl.textContent = cars[carIndex + 1].price;
-      carButtonEl.disabled = money < cars[carIndex + 1].price;
-    } else {
-      carButtonEl.textContent = "🏁 Максимальная машина";
-      carButtonEl.disabled = true;
-    }
+  carEl.textContent = cars[carIndex].icon;
+  carNameEl.textContent = cars[carIndex].name;
+
+  if (carIndex < cars.length - 1) {
+    carPriceEl.textContent = cars[carIndex + 1].price;
+    carBtn.disabled = money < cars[carIndex + 1].price;
+  } else {
+    carBtn.textContent = "🏁 Максимум";
+    carBtn.disabled = true;
   }
+}
 
-  function save() {
-    localStorage.setItem("money", money);
-    localStorage.setItem("perClick", perClick);
-    localStorage.setItem("perSecond", perSecond);
-    localStorage.setItem("enginePrice", enginePrice);
-    localStorage.setItem("taxiPrice", taxiPrice);
-    localStorage.setItem("carIndex", carIndex);
-  }
+function save() {
+  localStorage.setItem("money", money);
+  localStorage.setItem("perClick", perClick);
+  localStorage.setItem("perSecond", perSecond);
+  localStorage.setItem("enginePrice", enginePrice);
+  localStorage.setItem("taxiPrice", taxiPrice);
+  localStorage.setItem("carIndex", carIndex);
+}
 
-  function clickCar() {
-    money += perClick;
-    updateUI();
-    save();
-  }
+/* ===== ЭФФЕКТЫ ===== */
+function spawnSmoke() {
+  const s = document.createElement("div");
+  s.className = "smoke";
+  s.textContent = "💨";
+  document.querySelector(".scene").appendChild(s);
+  setTimeout(() => s.remove(), 600);
+}
 
-  function buyEngine() {
-    if (money >= enginePrice) {
-      money -= enginePrice;
-      perClick += 1;
-      enginePrice = Math.floor(enginePrice * 1.5);
-      updateUI();
-      save();
-    }
-  }
+function boost() {
+  road.style.animationDuration = "0.6s";
+  carEl.classList.add("boost");
+  spawnSmoke();
 
-  function buyTaxi() {
-    if (money >= taxiPrice) {
-      money -= taxiPrice;
-      perSecond += 2;
-      taxiPrice = Math.floor(taxiPrice * 1.6);
-      updateUI();
-      save();
-    }
-  }
+  clearTimeout(speedTimeout);
+  speedTimeout = setTimeout(() => {
+    road.style.animationDuration = "2s";
+    carEl.classList.remove("boost");
+  }, 300);
+}
 
-  function buyNextCar() {
-    if (carIndex < cars.length - 1) {
-      const nextCar = cars[carIndex + 1];
-      if (money >= nextCar.price) {
-        money -= nextCar.price;
-        carIndex++;
-        perClick += nextCar.bonus;
-        updateUI();
-        save();
-      }
-    }
-  }
-
-  setInterval(() => {
-    money += perSecond;
-    updateUI();
-    save();
-  }, 1000);
-
+/* ===== ИГРА ===== */
+function clickCar() {
+  money += perClick;
+  boost();
   updateUI();
+  save();
+}
+
+function buyEngine() {
+  if (money >= enginePrice) {
+    money -= enginePrice;
+    perClick++;
+    enginePrice = Math.floor(enginePrice * 1.5);
+    updateUI();
+    save();
+  }
+}
+
+function buyTaxi() {
+  if (money >= taxiPrice) {
+    money -= taxiPrice;
+    perSecond += 2;
+    taxiPrice = Math.floor(taxiPrice * 1.6);
+    updateUI();
+    save();
+  }
+}
+
+function buyCar() {
+  const next = cars[carIndex + 1];
+  if (next && money >= next.price) {
+    money -= next.price;
+    carIndex++;
+    perClick += next.bonus;
+    updateUI();
+    save();
+  }
+}
+
+setInterval(() => {
+  money += perSecond;
+  updateUI();
+  save();
+}, 1000);
+
+updateUI();
 </script>
 
 </body>
